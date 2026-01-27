@@ -28,20 +28,40 @@ En cas d'erreur l'utilisateurs sera informé du problème rencontré
 
 Fichier audiotraitement.js
 Ce fichier est utile pour le traitement des fichiers audios, il est indispensable car il permet de d'envoyer à l'API un fichier audio universelle, l'utilisateurs n'a pas a se soucier de l'extentions de son fichier audio.
+Pour que le fichier soit lu par l'API speech to text il faut que l'audio soit en Single Channel (mono)
+Lors que l'enregistrement des audio avec Wavesurfer par défault il enregistre avec 2 channel, pour changer ca il faut modifier les option de la fonction startRecording(options)
+https://wavesurfer.xyz/docs/classes/plugins_record.default#startRecording
+  const PARAMRECORD = {
+    deviceId: deviceId,
+    channelCount: 1,
+  }
 
+Problème de permissions (1 et 2)
+1. Utilisation du local storage pour crée un historique des fichiers. Rapidement je me suis conforonté au problème que les fichiers mp3 ne peuvent pas être stoquer dans les local storages surtout que cette base de donnée est limité a 5Mo. J'ai trouvé l'alternative d'utiliser une API nommé localforage et qui permet de stoquer des types de fichiers dans le navigateurs. J'ai besoin de stoquer les ces fichiers pour que l'historique des fichiers reste persistant même lorsqu'on quitte la page.
+https://github.com/localForage/localForage
+2. Lorsque le user enregistre un audio avec le micro cette audio est sur le navigateur. Pour le placer dans le champs value de la balise input de type="file", il faut une autorisation, c'est pour cela qu'on utilise l'API DataTransfère
+https://developer.mozilla.org/fr/docs/Web/API/DataTransfer
 
-Utilisation du local storage pour crée un historique de
+const DATATRANSFER = new DataTransfer(); // Création du conteneur
+const file = new File(["contenu"], "test.txt");
+
+DATATRANSFER.items.add(file); // On ajoute le fichier 
+
+// DATATRANSFER.files est maintenant une "FileList" que l'input accepte !
+document.querySelector('input').files = DATATRANSFER.files;
+
 
 Les library Graphique
-J'utilise le Framework TailwindCSS pour gérer plus facilement le responsive designe
+J'utilise le Framework TailwindCSS pour gérer plus facilement le responsive designe. Download le fichier tailwind.css avec NPM
 J'utilise le Wavesurfer, Wavesurfer.js is an open-source audio visualization library for creating interactive, customizable waveforms.
 est une library de visualization d'audio open-source. Elle permet de custom la forme des audios et d'exploiter si il y a du son.
+
 
 Utilisé l'API FILE
 
 Idée supplémentaire:
 Faire un responsive et une joli interface
-Stocker l'historique des vocaux en localstorage
+Stocker l'historique des vocaux en foragestorage
 Fonctionnalité transcription en Streaming
 Trouver un joli Logo et un nom pour le site
 Finir la DOC
