@@ -58,3 +58,18 @@ Les library Graphique
 J'utilise le Framework TailwindCSS pour gérer plus facilement le responsive designe. Download le fichier tailwind.css avec NPM
 J'utilise le Wavesurfer, Wavesurfer.js is an open-source audio visualization library for creating interactive, customizable waveforms.
 est une library de visualization d'audio open-source. Elle permet de custom la forme des audios et d'exploiter si il y a du son.
+
+
+Utilisé l'API FILE
+
+Fixe:
+Les buttons Installer recharger
+Faire un joli texte pour l'audio Résultat
+
+Idée supplémentaire:
+Faire un responsive et une joli interface
+Stocker l'historique des vocaux en foragestorage
+Fonctionnalité transcription en Streaming
+Trouver un joli Logo et un nom pour le site
+Finir la DOC
+Gérer les buttons de pwa pour recharger la pages sur l'APP
