@@ -1,117 +1,60 @@
-Voici une version restructurée et formatée de votre fichier `README.md`, prête à être utilisée sur GitHub. Je n'ai ajouté aucune nouvelle fonctionnalité, j'ai simplement organisé vos informations pour les rendre claires et professionnelles.
+# AppAudioVersTexte
 
----
+AudioVersTexte est une application web légère conçue pour transformer instantanément des fichiers audio en archives textuelles exploitables.
 
-# 🎙️ AppAudioVersTexte
+En s'appuyant sur l'intelligence artificielle de Google Cloud Speech-to-Text, l'outil permet aux utilisateurs d'uploader des enregistrements (mémos vocaux, messages de répondeur, notes de réunion) et d'obtenir une transcription écrite précise. Chaque fichier traité est automatiquement loger et ajouté à dans les sauvegardes.
 
-**AudioVersTexte** est une application web légère (PWA) conçue pour transformer instantanément des fichiers audio en archives textuelles exploitables.
+Projet en PWA voir les fichiers:
+manifest.js pour changer le nom et l'hébergement du site https://srv-peda2.iut-acy.univ-smb.fr/jacqutim/AppAudioVersTexte-main/
+pwa.js pour installer et recharger la page
+voir la balise head de index.html
+dossier favion générer par https://realfavicongenerator.net/
 
-En s'appuyant sur l'intelligence artificielle de **Google Cloud Speech-to-Text**, l'outil permet aux utilisateurs d'uploader des enregistrements (mémos vocaux, messages de répondeur, notes de réunion) et d'obtenir une transcription écrite précise. Chaque fichier traité est automatiquement loggé et ajouté aux sauvegardes locales.
+Un prérequit est de crée un compte Google Cloud, actuellement il existe une offre 90 gratuit avec 200euro de crédit.
+Etape 1: Crée une zone projet
+Etape 2: Accéder a la rubrique API et Service
+Etape 3: Activé l'API Speech to Text
+Etape 4: Générer un clé API
 
----
+Sutructure du projet
+Fichier index.html
+Fichier index.js
+Il contient les listener qui vérifie si des actions on été effectuer par l'utilisateurs.
+Le bouton submit de l'audio, est une fonction async car elle contient un requete vers une API, on utilise cela car il y a du délais avant de recevoir la réponse. En faisant ca on met "en pause" le code javascript
+https://docs.cloud.google.com/speech-to-text/docs/sync-recognize?hl=fr
 
-## 📋 Prérequis
+Plutôt que d'affichier des messages en console, on utilise une champs de text pour affichiers le status et les erreurs à l'utilisateurs. L'id de la div est "status"
+En cas d'erreur l'utilisateurs sera informé du problème rencontré
 
-Pour faire fonctionner la transcription, un compte Google Cloud est nécessaire (offre gratuite de 90 jours avec 200€ de crédit disponible actuellement).
+Fichier audiotraitement.js
+Ce fichier est utile pour le traitement des fichiers audios, il est indispensable car il permet de d'envoyer à l'API un fichier audio universelle, l'utilisateurs n'a pas a se soucier de l'extentions de son fichier audio.
+Pour que le fichier soit lu par l'API speech to text il faut que l'audio soit en Single Channel (mono)
+Lors que l'enregistrement des audio avec Wavesurfer par défault il enregistre avec 2 channel, pour changer ca il faut modifier les option de la fonction startRecording(options)
+https://wavesurfer.xyz/docs/classes/plugins_record.default#startRecording
+  const PARAMRECORD = {
+    deviceId: deviceId,
+    channelCount: 1,
+  }
 
-1. Créer une zone projet sur Google Cloud.
-2. Accéder à la rubrique **API et Service**.
-3. Activer l'API **Speech-to-Text**.
-4. Générer une **clé API**.
+Problème de permissions (1 et 2)
+1. Utilisation du local storage pour crée un historique des fichiers. Rapidement je me suis conforonté au problème que les fichiers mp3 ne peuvent pas être stoquer dans les local storages surtout que cette base de donnée est limité a 5Mo. J'ai trouvé l'alternative d'utiliser une API nommé localforage et qui permet de stoquer des types de fichiers dans le navigateurs. J'ai besoin de stoquer les ces fichiers pour que l'historique des fichiers reste persistant même lorsqu'on quitte la page.
+https://github.com/localForage/localForage
+2. Lorsque le user enregistre un audio avec le micro cette audio est sur le navigateur. Pour le placer dans le champs value de la balise input de type="file", il faut une autorisation, c'est pour cela qu'on utilise l'API DataTransfère
+https://developer.mozilla.org/fr/docs/Web/API/DataTransfer
 
----
-
-## 🛠️ Stack Technique & Bibliothèques
-
-* **TailwindCSS** : Framework CSS utilisé pour gérer le responsive design.
-* **Wavesurfer.js** : Librairie open-source de visualisation audio pour créer des formes d'ondes interactives et personnalisables.
-* **LocalForage** : Librairie de stockage asynchrone pour stocker des fichiers volumineux côté client.
-* **Google Cloud Speech-to-Text** : API de transcription.
-
----
-
-## 📂 Structure du Projet
-
-### `index.html`
-
-Structure principale de l'application. Voir la balise `<head>` pour les inclusions PWA et scripts.
-
-### `index.js`
-
-Contient la logique principale et les écouteurs d'événements (listeners).
-
-* **Gestion Async** : Le bouton de soumission utilise une fonction `async` pour gérer le délai de réponse de l'API Google, mettant "en pause" le code JS en attendant le résultat.
-* **Feedback UI** : Plutôt que d'utiliser la console, une `div` (id="status") affiche les erreurs et le statut directement à l'utilisateur.
-
-### `audiotraitement.js`
-
-Indispensable pour l'uniformisation des fichiers audio.
-
-* Permet d'envoyer un format universel à l'API, peu importe l'extension d'origine.
-* **Gestion des Canaux** : L'API Speech-to-Text nécessite du **Mono (Single Channel)**. Par défaut, Wavesurfer enregistre en stéréo (2 canaux).
-* *Configuration Wavesurfer pour forcer le Mono :*
-```javascript
-const PARAMRECORD = {
-  deviceId: deviceId,
-  channelCount: 1, // Force le mode mono
-}
-
-```
-
-
-
----
-
-## 🧩 Solutions Techniques & Challenges
-
-### 1. Persistance des Données (LocalForage)
-
-Le `localStorage` classique est limité à 5Mo et ne gère pas bien les fichiers binaires (MP3/Blobs).
-
-* **Solution** : Utilisation de l'API **LocalForage**. Elle permet de stocker les fichiers audio directement dans le navigateur pour conserver un historique persistant même après fermeture de la page.
-
-### 2. Manipulation des Fichiers (DataTransfer API)
-
-Lorsqu'un utilisateur enregistre un audio via le micro, le fichier est généré en mémoire (Blob). Pour placer ce fichier dans un `<input type="file">` standard (nécessaire pour le traitement classique), une permission spéciale est requise.
-
-* **Solution** : Utilisation de l'API **DataTransfer** pour simuler un upload utilisateur.
-```javascript
-const DATATRANSFER = new DataTransfer();
+const DATATRANSFER = new DataTransfer(); // Création du conteneur
 const FILE = new File(["contenu"], "test.txt");
 
-DATATRANSFER.items.add(FILE);
+DATATRANSFER.items.add(file); // On ajoute le fichier 
 
-// Injection dans l'input
+// DATATRANSFER.files est maintenant une "FileList" que l'input accepte !
 document.querySelector('input').files = DATATRANSFER.files;
 
-```
+System de Glisser/Depose
+Pour cela on utilise un champ input que l'on chache et pas dessus on active une zone de Glisser
 
 
-
-### 3. Système de Glisser/Déposer (Drag & Drop)
-
-Implémenté via un champ `input` caché, recouvert par une zone visuelle active pour le drop. Utilise également l'API File.
-
----
-
-## 📱 Progressive Web App (PWA)
-
-Le projet est configuré pour être installable comme une application native.
-
-* **URL de démo** : `https://srv-peda2.iut-acy.univ-smb.fr/jacqutim/AppAudioVersTexte-main/`
-* **`manifest.json`** : Gère le nom, les icônes et l'affichage de l'application.
-* **`pwa.js`** : Script de gestion pour l'installation et le rechargement de la page/cache.
-* **Favicons** : Générés via RealFaviconGenerator.
-
----
-
-## 🚀 Roadmap (À faire / Fixes)
-
-**Corrections en cours :**
-
-* [ ] Finaliser la gestion des boutons PWA pour la mise à jour de l'app.
-
-**Idées d'améliorations :**
-
-* [ ] Améliorer le Responsive Design et l'interface globale.
-* [ ] Créer un Logo et définir un nom définitif.
+Les library Graphique
+J'utilise le Framework TailwindCSS pour gérer plus facilement le responsive designe. Download le fichier tailwind.css avec NPM
+J'utilise le Wavesurfer, Wavesurfer.js is an open-source audio visualization library for creating interactive, customizable waveforms.
+est une library de visualization d'audio open-source. Elle permet de custom la forme des audios et d'exploiter si il y a du son.
