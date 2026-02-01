@@ -4,32 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speech to Text - Google Cloud (Universel)</title>
-    <script defer src="./index.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-        .container { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-        textarea { width: 100%; height: 150px; margin-top: 10px; }
-        button { padding: 10px 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .status { margin-top: 10px; color: #555; font-weight: bold; }
-        .error { color: red; }
-    </style>
-</head>
-<body>
 
+
+    <!-- LINK online pour la PWA -->
+    <link rel="icon" type="image/png" href="/jacqutim/TimTranscript/favicon/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/svg+xml" href="/jacqutim/TimTranscript/favicon/favicon.svg">
+    <link rel="shortcut icon" href="/jacqutim/TimTranscript/favicon/favicon.ico">
+    <link rel="manifest" href="/jacqutim/TimTranscript/favicon/site.webmanifest">
+
+    <!-- Balise LINK pour le CSS, ici on utilise l'api tailwindcss -->
+    <link rel="stylesheet" href="./css/style.css">
+
+    <link rel="stylesheet" href="./css/output.css">
+    <!--<script src="https://cdn.tailwindcss.com"></script>-->
+
+    <!-- Balise Script pour l'api LocalForage stoquage des fichiers, ainsi que le les scripts JS utile au chargement de la page -->
+    <script defer src="./js/pwa.js"></script>
+    <script defer src="./library/localforage.js"></script>
+
+    <script defer type="module" src="index.js"></script>
+    <script type="text/javascript" src="./js/audiotraitement.js"></script>
+
+    <script defer type="module" src="./js/audioenregistrement.js"></script>
+
+    <script defer src="./js/glisserdeposer.js"></script>
+</head>
+
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <!-- Navbar / PWA Controls -->
+    <nav class="bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <img src="./favicon/favicon-96x96.png" alt="Logo" class="w-8 h-8">
+                <h1 class="font-bold text-xl tracking-tight text-blue-600">AudioVersTexte</h1>
+            </div>
+            <div class="flex gap-2">
+                <button id="install_button" disabled class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
+                    Installer l'App
+                </button>
+                <button id="reload_button" disabled class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-300 transition-colors">
+                    Recharger
+                </button>
+            </div>
+        </div>
+    </nav>
+<main class="max-w-4xl mx-auto p-4 sm:p-8">
+<header class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Transcripteur Audio</h2>
+    <p class="text-slate-500">Enregistrez votre voix ou importez un fichier audio pour obtenir une transcription instantanée.</p>
+</header>
 <div class="container">
-    <h2>Reconnaissance Vocale (M4A, MP3, WAV...)</h2>
-    <p>Sélectionnez un fichier audio (max ~1 min pour éviter le timeout).</p>
-    
-    <input type="file" id="audioInput" accept="audio/*">
-    <br><br>
-    
-    <button id="sendBtn">Transcrire l'audio</button>
-    
-    <div id="status" class="status"></div>
-    
-    <h3>Résultat :</h3>
-    <textarea id="resultOutput" placeholder="Le texte apparaîtra ici..."></textarea>
+    <!-- Zone de contrôle d'enregistrement -->
+    <section class="mb-10 p-6 bg-slate-50 rounded-xl border border-slate-200">
+
+        <div class="recording-controls flex flex-col sm:flex-row items-center gap-4 mb-4">
+            <button id="record" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-200">Enregistrer</button>
+            <button id="pause" class="hidden w-full sm:w-auto bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-300 transition-all">Pause</button>
+            <select id="mic-select" class="flex-1 w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="" hidden>Choisir micro</option>
+            </select>
+            <span id="progress" class="font-mono text-xl font-bold text-slate-400 min-w-[60px] text-center">00:00</span>
+        </div>
+
+        <div id="mic" class="hidden bg-white rounded-lg border border-slate-200 h-24 mb-4 overflow-hidden shadow-inner"></div>
+        <div id="recordings" class="hidden space-y-4 pt-4 border-t border-slate-200"></div>
+    </section>
+
+    <div class="relative group mb-8">
+        <input type="file" id="audioInput" accept="audio/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+        <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-white group-hover:border-blue-400 group-hover:bg-blue-50 transition-all pointer-events-none">
+            <div class="text-4xl mb-3 text-slate-400 group-hover:text-blue-500 transition-colors">📁</div>
+            <p id="fileNameDisplay" class="font-semibold text-slate-700">Cliquez ou glissez un fichier audio ici</p>
+            <p class="text-sm text-slate-400 mt-1">(MP3, WAV, M4A, etc.)</p>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <button id="sendBtn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none">
+        Transcrire l'audio
+    </button>
+
+    <!-- Feedback & Output -->
+    <div id="status" class="mt-4 text-center text-sm font-medium text-slate-500"></div>
+
+    <div class="mt-8 space-y-3">
+        <label class="block font-bold text-slate-700 text-lg">Résultat :</label>
+        <textarea id="resultOutput" readonly class="w-full h-40 p-5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="La transcription apparaîtra ici..."></textarea>
+    </div>
+
+    <!-- History Section -->
+    <section>
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-slate-800">Historique des Transcriptions</h3>
+            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Archives</span>
+        </div>
+        <div id="logsContainer" class="space-y-6">
+            <div id="emptyMsg" class="text-center py-12 bg-white rounded-2xl border border-slate-100 text-slate-400 italic">
+                Aucun enregistrement pour le moment.
+            </div>
+        </div>
+    </section>
 </div>
+
+</main>
+
+
 </body>
 </html>
+
+
+<script type="module">
+
+
+
+// Vérification que localforage est là
+  if (window.localforage) {
+      console.log("LocalForage est prêt !");
+
+      // Configuration
+      window.localforage.config({
+          name: 'AudioApp'
+      });
+  } else {
+      console.error("Erreur : LocalForage non chargé.");
+  }
+</script>
+<style>
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0; /* Sécurité supplémentaire */
+}
+
+/* Assurez-vous aussi que le label prend toute la place pour faciliter le doigt */
+.file-upload-label {
+    /* ... vos styles existants ... */
+    width: 100%;  /* Important pour mobile */
+    box-sizing: border-box; /* Pour que le padding ne casse pas la largeur */
+}
+</style>
