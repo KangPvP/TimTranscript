@@ -6,7 +6,7 @@ En s'appuyant sur l'intelligence artificielle de **Google Cloud Speech-to-Text**
 
 ## Role des fichiers
 Projet en PWA voir les fichiers:
-manifest.js pour changer le nom et l'hébergement du site https://srv-peda2.iut-acy.univ-smb.fr/jacqutim/AppAudioVersTexte-main/
+manifest.js pour changer le nom et l'hébergement du site https://srv-peda2.iut-acy.univ-smb.fr/jacqutim/TimTranscript/
 pwa.js pour installer et recharger la page
 voir la balise head de index.html
 dossier favion générer par https://realfavicongenerator.net/
